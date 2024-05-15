@@ -56,7 +56,7 @@ def glv_error(params,chemostat_population):
     return np.sum((integrated_soln.y[0] - chemostat_population)**2)
 
 def integrate_chemostat(teval,initialConditions,chemostatArgs):
-    soln = integrate.solve_ivp(chemostat_dynamics,[0,teval[-1]],[initialConditions[0],initialConditions[1]],args=(chemostatArgs,),t_eval=teval)
+    soln = integrate.solve_ivp(chemostat_dynamics,[0,teval[-1]],[initialConditions[0],initialConditions[1]],args=(chemostatArgs,),t_eval=teval,rtol=1e-8,atol=1e-8)
     return soln
 
 def solve_and_fit(teval,initialConditions,mu,k,yiel,delta,s):
@@ -64,10 +64,12 @@ def solve_and_fit(teval,initialConditions,mu,k,yiel,delta,s):
     soln = integrate_chemostat(teval,initialConditions,chemostatArgs)
 
     theory_soln = lambda t,g,alpha: logistic_solution(t,g,alpha,initialConditions[0])
-    # full_fit_params,fitcorr  = optimize.curve_fit(theory_soln,teval,soln.y[0],p0=[1,1],bounds=([0,0],[np.inf,np.inf]))
+    # full_fit_params,fitcorr  = optimize.curve_fit(theory_soln,teval,soln.y[0],p0=[1,1],bounds=(0,np.inf))
 
 
-    full_fit_params = optimize.minimize(glv_error,[0.1,0.1],args=(soln.y[0]),method='Nelder-Mead',bounds=((0,None),(0,None))).x
+    full_fit = optimize.minimize(glv_error,[0.1,0.1],args=(soln.y[0]),method='Nelder-Mead',bounds=((0,None),(0,None)))
+    full_fit_params = full_fit.x
+    fitErr = full_fit.fun
         
     # except:
     #     print(mu,k,yiel,delta,s)
@@ -77,26 +79,31 @@ def solve_and_fit(teval,initialConditions,mu,k,yiel,delta,s):
     #     plt.show()
     final_qss_approx = glv_approx_params(soln.y[1][-1],*chemostatArgs)
 
-    return full_fit_params,final_qss_approx
+    return full_fit_params,final_qss_approx,fitErr
 
-muArray = np.round(np.random.uniform(0.1,0.8,100),3)
-kArray = np.round(np.random.uniform(1e-1,6,25),3)
+muArray = np.round(np.random.uniform(0.1,0.8,20),3)
+kArray = np.round(np.random.uniform(1e-1,6,10),3)
 
 fullFitArray = np.zeros((muArray.size,kArray.size,2))
 qssFitArray = np.zeros(fullFitArray.shape)
+fullFitErrors = np.zeros((muArray.size,kArray.size))
 
 print(time.ctime())
 START_TIME = time.time()
 for i,mu in enumerate(muArray):
     for j,k in enumerate(kArray):            
-            full_fit_params,final_qss_approx = solve_and_fit(teval,initialConditions,mu,k,yiel,delta,s)
+            full_fit_params,final_qss_approx,fitcorrs = solve_and_fit(teval,initialConditions,mu,k,yiel,delta,s)
             fullFitArray[i,j] = full_fit_params
             qssFitArray[i,j] = final_qss_approx
+            fullFitErrors[i,j] = fitcorrs
 
 END_TIME = time.time()
 print(time.ctime(),END_TIME-START_TIME)
 
 np.save('../data/fullFitArray_2.npy',fullFitArray)
 np.save('../data/qssFitArray_2.npy',qssFitArray)
+np.save('../data/fullFitErrors_2.npy',fullFitErrors)
+np.save('../data/muArray_2.npy',muArray)
+np.save('../data/kArray_2.npy',kArray)
 
 
