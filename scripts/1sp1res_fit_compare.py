@@ -31,15 +31,15 @@ def glv_rhs(t,y,g,alpha):
 
 @njit
 def glv_approx_params(c,mu,k,yiel,delta,s):
-    sij = mu*k / (k+c)**2
-    fi = delta*(s-c) 
-    df_de = -delta
-    eC = mu*c / (k+c) / yiel
-    de_dE = mu*k / (k+c)**2 / yiel
+    sij = -mu*k / (k+c)**2
+    sigma = delta*(s-c) 
+    dsigma_dr = -delta
+    f = mu*c / (k+c) / yiel
+    df_dr = -mu*k / (k+c)**2 / yiel
 
-    mij = de_dE / eC * fi - df_de
-    gcalc = fi / mij / sij
-    alphacalc = eC / sij/mij
+    mij = df_dr / f * sigma - dsigma_dr
+    gcalc = sij / mij * sigma
+    alphacalc = -sij /mij * f
     return gcalc,alphacalc
 
 @njit
@@ -100,10 +100,10 @@ for i,mu in enumerate(muArray):
 END_TIME = time.time()
 print(time.ctime(),END_TIME-START_TIME)
 
-np.save('../data/fullFitArray_2.npy',fullFitArray)
-np.save('../data/qssFitArray_2.npy',qssFitArray)
-np.save('../data/fullFitErrors_2.npy',fullFitErrors)
-np.save('../data/muArray_2.npy',muArray)
-np.save('../data/kArray_2.npy',kArray)
+np.save('../data/fullFitArray_3.npy',fullFitArray)
+np.save('../data/qssFitArray_3.npy',qssFitArray)
+np.save('../data/fullFitErrors_3.npy',fullFitErrors)
+np.save('../data/muArray_3.npy',muArray)
+np.save('../data/kArray_3.npy',kArray)
 
 
