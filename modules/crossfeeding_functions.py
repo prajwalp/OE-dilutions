@@ -49,7 +49,7 @@ def eMatrixFn(muMatrix,kMatrix,dTensor,rVec,Nr,Ns):
             leakage = 0
             for alpha in range(Nr):
                 leakage += dTensor[j,beta,alpha]*muMatrix[j,alpha]*rVec[alpha] / (kMatrix[j,alpha] + rVec[alpha])
-            eMatrix[beta,j] = leakage + muMatrix[j,beta] * rVec[beta] / (kMatrix[j,beta] + rVec[beta])
+            eMatrix[beta,j] = leakage - muMatrix[j,beta] * rVec[beta] / (kMatrix[j,beta] + rVec[beta])
     return eMatrix
 
 def sMatrixFn(muMatrix,kMatrix,rVec,Nr,Ns):
@@ -66,7 +66,7 @@ def dedrFn(muMatrix,kMatrix,dTensor,rVec,Nr,Ns):
             for j in range(Ns):
                 dedr[beta,alpha,j] = dTensor[j,beta,alpha]*muMatrix[j,alpha]*kMatrix[j,alpha] / (kMatrix[j,alpha] + rVec[alpha])**2
             if beta == alpha:
-                dedr[beta,alpha,j] += muMatrix[j,alpha] *kMatrix[j,alpha]/ (kMatrix[j,alpha] + rVec[alpha])**2
+                dedr[beta,alpha,j] += -muMatrix[j,alpha] *kMatrix[j,alpha]/ (kMatrix[j,alpha] + rVec[alpha])**2
     return dedr
 
 def mMatrixFn(muMatrix,kMatrix,dTensor,rVec,delta,supplyVec,Nr,Ns):

@@ -81,7 +81,7 @@ def solve_and_fit(teval,initialConditions,mu,k,yiel,delta,s):
 
     return full_fit_params,final_qss_approx,fitErr
 
-muArray = np.round(np.random.uniform(0.1,0.8,20),3)
+muArray = np.round(np.random.uniform(0.1,0.8,10),3)
 kArray = np.round(np.random.uniform(1e-1,6,10),3)
 
 fullFitArray = np.zeros((muArray.size,kArray.size,2))
