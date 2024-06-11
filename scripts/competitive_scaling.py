@@ -31,25 +31,34 @@ def mainGammaFitFn(Nr,Ns,supplyVec,delta,muMean,muSd,kMean,kSd):
     initialResources = supplyVec
     initialConditions = np.concatenate((initialPopulations,initialResources))
 
-    t = np.linspace(0,480,1000)
+    t = np.linspace(0,1000,1000)
     
     chemostat_sol = integrate.solve_ivp(cmpfns.chemostat_dynamics,(0,t[-1]),initialConditions,args=(muMatrix, kMatrix, delta, supplyVec,Nr,Ns),t_eval=t,max_step=0.1)
 
     qssCEnd = cmpfns.qssResourcesSolver(cmpfns.resUsage,chemostat_sol.y[:Ns,-1],chemostat_sol.y[Ns:,-1],muMatrix, kMatrix, delta, supplyVec,Nr,Ns)
     tdepGrowthEnd,tdepInterEnd = cmpfns.glvParamsFn(muMatrix,kMatrix,qssCEnd,delta,supplyVec,Nr,Ns)
 
+    glvSoln = cmpfns.solveGLV(initialPopulations,t,tdepGrowthEnd,tdepInterEnd)
+    glvChemostatDiff = (glvSoln[:,-1] - chemostat_sol.y[:Ns,-1])
+
     histend,edgesend = np.histogram(tdepInterEnd.flatten(),bins="auto",density=False)
     cumhistend = 1-np.cumsum(histend)/np.sum(histend)
     fitend = optimize.curve_fit(gamma_ccdf,edgesend[:-1],cumhistend)
 
-    return fitend[0],fitend[1]
+    return muMatrix,kMatrix,tdepGrowthEnd,tdepInterEnd,fitend,chemostat_sol.y[:,-1],glvChemostatDiff
 
 def multipleRun(Nr,Ns,supplyVec,delta,muMean,muSd,kMean,kSd,numRuns):
     fitResults = np.zeros((numRuns,2))
     fitErrors = np.zeros((numRuns,2,2))
+    muMatrices = np.zeros((numRuns,Ns,Nr))
+    kMatrices = np.zeros((numRuns,Ns,Nr))
+    tdepGrowths = np.zeros((numRuns,Ns))
+    tdepInters = np.zeros((numRuns,Ns,Ns))
+    chemostatSolutions = np.zeros((numRuns,Ns+Nr))
+    glvErrors = np.zeros((numRuns,Ns))
     for i in range(numRuns):
-        fitResults[i],fitErrors[i] = mainGammaFitFn(Nr,Ns,supplyVec,delta,muMean,muSd,kMean,kSd)
-    return fitResults,fitErrors
-
+        muMatrices[i],kMatrices[i],tdepGrowths[i],tdepInters[i],fitend,chemostatSolutions[i],glvErrors[i]= mainGammaFitFn(Nr,Ns,supplyVec,delta,muMean,muSd,kMean,kSd)
+        fitResults[i],fitErrors[i] = fitend[0],fitend[1]
+    return muMatrices,kMatrices,tdepGrowths,tdepInters,fitResults,fitErrors,chemostatSolutions,glvErrors
 
 
